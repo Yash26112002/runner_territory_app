@@ -1,0 +1,69 @@
+name: runner_territory_app
+description: A running territory app where users can claim and compete for territories.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # UI & Icons
+  cupertino_icons: ^1.0.2
+  flutter_svg: ^2.0.9
+  
+  # Form Validation
+  email_validator: ^2.1.17
+  
+  # State Management
+  provider: ^6.1.1
+  
+  # Image Handling
+  image_picker: ^1.0.7
+  
+  # Phone Number
+  country_code_picker: ^3.0.0
+  
+  # Onboarding
+  carousel_slider: ^4.2.1
+  smooth_page_indicator: ^1.1.0
+  
+  # Local Storage
+  shared_preferences: ^2.2.2
+  
+  # Maps & Location
+  google_maps_flutter: ^2.5.3
+  geolocator: ^11.0.0
+  permission_handler: ^11.2.0
+  flutter_polyline_points: ^2.0.1
+  
+  # HTTP & API
+  http: ^1.2.0
+  
+  # Utils
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/icons/
+  
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700
