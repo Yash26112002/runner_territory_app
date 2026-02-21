@@ -14,46 +14,46 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  final CarouselController _carouselController = CarouselController();
+  // v5 uses CarouselSliderController (no conflict with Flutter Material)
+  final CarouselSliderController _carouselController =
+      CarouselSliderController();
   int _currentIndex = 0;
 
-  final List<OnboardingSlide> _slides = [
-    OnboardingSlide(
+  final List<_OnboardingSlide> _slides = [
+    const _OnboardingSlide(
       icon: Icons.directions_run,
       title: 'Track Your Runs',
       description: 'Record your running routes with GPS precision',
-      color: AppTheme.primaryOrange,
     ),
-    OnboardingSlide(
+    const _OnboardingSlide(
       icon: Icons.map,
       title: 'Claim Your Territory',
-      description: 'Every run marks the area as yours. The more you run, the more you own!',
-      color: AppTheme.secondaryBlue,
+      description:
+          'Every run marks the area as yours. The more you run, the more you own!',
     ),
-    OnboardingSlide(
+    const _OnboardingSlide(
       icon: Icons.emoji_events,
       title: 'Compete for Territory',
-      description: 'Challenge others for territory dominance. Better pace and distance wins!',
-      color: AppTheme.accentPurple,
+      description:
+          'Challenge others for territory dominance. Better pace and distance wins!',
     ),
-    OnboardingSlide(
+    const _OnboardingSlide(
       icon: Icons.leaderboard,
       title: 'Climb the Ranks',
-      description: 'Compete locally and globally. Become the champion of your city!',
-      color: AppTheme.warningYellow,
+      description:
+          'Compete locally and globally. Become the champion of your city!',
     ),
-    OnboardingSlide(
+    const _OnboardingSlide(
       icon: Icons.flag,
       title: 'Ready to Run?',
-      description: 'Let\'s get started and mark your first territory!',
-      color: AppTheme.successGreen,
+      description: "Let's get started and mark your first territory!",
     ),
   ];
 
   Future<void> _completeOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(AppConstants.keyOnboardingComplete, true);
-    
+
     if (mounted) {
       Navigator.pushReplacementNamed(context, AppConstants.routeLogin);
     }
@@ -62,7 +62,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _skipToEnd() {
     _carouselController.animateToPage(
       _slides.length - 1,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 400),
       curve: Curves.easeInOut,
     );
   }
@@ -70,7 +70,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _nextSlide() {
     if (_currentIndex < _slides.length - 1) {
       _carouselController.nextPage(
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
       );
     } else {
@@ -88,28 +88,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // Skip Button
-              if (_currentIndex < _slides.length - 1)
-                Align(
-                  alignment: Alignment.topRight,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: TextButton(
-                      onPressed: _skipToEnd,
-                      child: const Text(
-                        'Skip',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+              // Skip Button row
+              SizedBox(
+                height: 56,
+                child: _currentIndex < _slides.length - 1
+                    ? Align(
+                        alignment: Alignment.topRight,
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: TextButton(
+                            onPressed: _skipToEnd,
+                            child: const Text(
+                              'Skip',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
-                )
-              else
-                const SizedBox(height: 56),
-              
+                      )
+                    : const SizedBox.shrink(),
+              ),
+
               // Carousel
               Expanded(
                 child: CarouselSlider.builder(
@@ -126,11 +128,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     },
                   ),
                   itemBuilder: (context, index, realIndex) {
-                    return _buildSlide(_slides[index]);
+                    return _SlideWidget(slide: _slides[index]);
                   },
                 ),
               ),
-              
+
               // Page Indicator
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 24),
@@ -139,15 +141,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   count: _slides.length,
                   effect: ExpandingDotsEffect(
                     activeDotColor: Colors.white,
-                    dotColor: Colors.white.withOpacity(0.3),
+                    dotColor: Colors.white.withValues(alpha: 0.3),
                     dotHeight: 8,
                     dotWidth: 8,
                     expansionFactor: 3,
                   ),
                 ),
               ),
-              
-              // Next/Get Started Button
+
+              // Next / Get Started Button
               Padding(
                 padding: const EdgeInsets.all(AppConstants.paddingLarge),
                 child: CustomButton(
@@ -166,75 +168,104 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
     );
   }
+}
 
-  Widget _buildSlide(OnboardingSlide slide) {
+/// Each slide is its own StatefulWidget so the entry animation re-triggers.
+class _SlideWidget extends StatefulWidget {
+  final _OnboardingSlide slide;
+  const _SlideWidget({required this.slide});
+
+  @override
+  State<_SlideWidget> createState() => __SlideWidgetState();
+}
+
+class __SlideWidgetState extends State<_SlideWidget>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _animController;
+  late final Animation<double> _scaleAnim;
+  late final Animation<double> _fadeAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _scaleAnim = CurvedAnimation(
+      parent: _animController,
+      curve: Curves.elasticOut,
+    );
+    _fadeAnim = CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeIn,
+    );
+    _animController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(AppConstants.paddingLarge),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Animated Icon
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0.0, end: 1.0),
-            duration: const Duration(milliseconds: 500),
-            builder: (context, value, child) {
-              return Transform.scale(
-                scale: value,
-                child: Container(
-                  height: 200,
-                  width: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    slide.icon,
-                    size: 100,
-                    color: Colors.white,
-                  ),
+      child: FadeTransition(
+        opacity: _fadeAnim,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ScaleTransition(
+              scale: _scaleAnim,
+              child: Container(
+                height: 200,
+                width: 200,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
                 ),
-              );
-            },
-          ),
-          
-          const SizedBox(height: 48),
-          
-          // Title
-          Text(
-            slide.title,
-            style: Theme.of(context).textTheme.displayMedium?.copyWith(
-              fontSize: 32,
+                child: Icon(
+                  widget.slide.icon,
+                  size: 100,
+                  color: Colors.white,
+                ),
+              ),
             ),
-            textAlign: TextAlign.center,
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // Description
-          Text(
-            slide.description,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Colors.white.withOpacity(0.9),
-              fontSize: 18,
+            const SizedBox(height: 48),
+            Text(
+              widget.slide.title,
+              style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                    fontSize: 32,
+                  ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+            const SizedBox(height: 24),
+            Text(
+              widget.slide.description,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 18,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class OnboardingSlide {
+class _OnboardingSlide {
   final IconData icon;
   final String title;
   final String description;
-  final Color color;
 
-  OnboardingSlide({
+  const _OnboardingSlide({
     required this.icon,
     required this.title,
     required this.description,
-    required this.color,
   });
 }

@@ -81,13 +81,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 40),
-                    
+
                     // Logo Placeholder
                     Container(
                       height: 100,
                       width: 100,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -96,29 +96,29 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: Colors.white,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // App Name
                     Text(
                       AppConstants.appName,
                       style: Theme.of(context).textTheme.displayMedium,
                       textAlign: TextAlign.center,
                     ),
-                    
+
                     const SizedBox(height: 8),
-                    
+
                     // Tagline
                     Text(
                       AppConstants.appTagline,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.white.withOpacity(0.9),
-                      ),
+                            color: Colors.white.withValues(alpha: 0.9),
+                          ),
                       textAlign: TextAlign.center,
                     ),
-                    
+
                     const SizedBox(height: 48),
-                    
+
                     // Email Field
                     CustomTextField(
                       controller: _emailController,
@@ -128,9 +128,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       validator: Validators.validateEmail,
                       autofocus: true,
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // Password Field
                     CustomTextField(
                       controller: _passwordController,
@@ -140,6 +140,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Password is required';
+                        }
+                        if (value.length < 8) {
+                          return 'Password must be at least 8 characters';
                         }
                         return null;
                       },
@@ -157,9 +160,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                       ),
                     ),
-                    
+
                     const SizedBox(height: 8),
-                    
+
                     // Forgot Password
                     Align(
                       alignment: Alignment.centerRight,
@@ -176,44 +179,58 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 8),
-                    
-                    // Error Message
-                    if (_errorMessage != null)
-                      Container(
-                        padding: const EdgeInsets.all(12),
+
+                    // Error Message — animated fade-in
+                    AnimatedOpacity(
+                      opacity: _errorMessage != null ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 300),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        height: _errorMessage != null ? null : 0,
+                        padding: _errorMessage != null
+                            ? const EdgeInsets.all(12)
+                            : EdgeInsets.zero,
+                        margin: _errorMessage != null
+                            ? const EdgeInsets.only(bottom: 16)
+                            : EdgeInsets.zero,
                         decoration: BoxDecoration(
-                          color: AppTheme.errorRed.withOpacity(0.1),
+                          color: _errorMessage != null
+                              ? AppTheme.errorRed.withValues(alpha: 0.15)
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppTheme.errorRed),
+                          border: _errorMessage != null
+                              ? Border.all(color: AppTheme.errorRed)
+                              : null,
                         ),
-                        child: Text(
-                          _errorMessage!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                          ),
-                        ),
+                        child: _errorMessage != null
+                            ? Text(
+                                _errorMessage!,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
+                              )
+                            : const SizedBox.shrink(),
                       ),
-                    
-                    if (_errorMessage != null) const SizedBox(height: 16),
-                    
+                    ),
+
                     // Login Button
                     CustomButton(
                       text: 'Login',
                       onPressed: _handleLogin,
                       isLoading: _isLoading,
                     ),
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // OR Divider
                     Row(
                       children: [
                         Expanded(
                           child: Divider(
-                            color: Colors.white.withOpacity(0.5),
+                            color: Colors.white.withValues(alpha: 0.5),
                             thickness: 1,
                           ),
                         ),
@@ -222,40 +239,40 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Text(
                             'OR',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
+                              color: Colors.white.withValues(alpha: 0.8),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
                         Expanded(
                           child: Divider(
-                            color: Colors.white.withOpacity(0.5),
+                            color: Colors.white.withValues(alpha: 0.5),
                             thickness: 1,
                           ),
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // Google Login
                     SocialLoginButton(
                       text: 'Continue with Google',
                       iconPath: 'google',
                       onPressed: _handleGoogleLogin,
                     ),
-                    
+
                     const SizedBox(height: 12),
-                    
+
                     // Apple Login
                     SocialLoginButton(
                       text: 'Continue with Apple',
                       iconPath: 'apple',
                       onPressed: _handleAppleLogin,
                     ),
-                    
+
                     const SizedBox(height: 32),
-                    
+
                     // Sign Up Link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -263,7 +280,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Text(
                           "Don't have an account? ",
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                           ),
                         ),
                         GestureDetector(

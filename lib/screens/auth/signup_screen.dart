@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:country_code_picker/country_code_picker.dart';
 import 'dart:io';
 import '../../theme/app_theme.dart';
 import '../../utils/constants.dart';
@@ -23,7 +24,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _phoneController = TextEditingController();
-  
+
   File? _profileImage;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -32,6 +33,7 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _usernameAvailable = true;
   bool _checkingUsername = false;
   DateTime? _selectedDate;
+  String _countryCode = '+1'; // default country code
 
   @override
   void dispose() {
@@ -47,7 +49,7 @@ class _SignupScreenState extends State<SignupScreen> {
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: source);
-    
+
     if (pickedFile != null) {
       setState(() {
         _profileImage = File(pickedFile.path);
@@ -85,7 +87,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   Future<void> _checkUsernameAvailability(String username) async {
     if (username.length < 3) return;
-    
+
     setState(() {
       _checkingUsername = true;
     });
@@ -140,6 +142,14 @@ class _SignupScreenState extends State<SignupScreen> {
         _isLoading = true;
       });
 
+      // Full phone number with country code (e.g. "+1 5551234567")
+      final fullPhone = _phoneController.text.isNotEmpty
+          ? '$_countryCode ${_phoneController.text}'
+          : null;
+
+      // TODO: Pass fullPhone to registration API
+      debugPrint('Phone: $fullPhone');
+
       // Simulate API call
       await Future.delayed(const Duration(seconds: 2));
 
@@ -183,7 +193,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   ],
                 ),
               ),
-              
+
               // Form
               Expanded(
                 child: GestureDetector(
@@ -201,7 +211,8 @@ class _SignupScreenState extends State<SignupScreen> {
                               children: [
                                 CircleAvatar(
                                   radius: 60,
-                                  backgroundColor: Colors.white.withOpacity(0.3),
+                                  backgroundColor:
+                                      Colors.white.withValues(alpha: 0.3),
                                   backgroundImage: _profileImage != null
                                       ? FileImage(_profileImage!)
                                       : null,
@@ -239,9 +250,9 @@ class _SignupScreenState extends State<SignupScreen> {
                               ],
                             ),
                           ),
-                          
+
                           const SizedBox(height: 32),
-                          
+
                           // Full Name
                           CustomTextField(
                             controller: _nameController,
@@ -249,9 +260,9 @@ class _SignupScreenState extends State<SignupScreen> {
                             prefixIcon: Icons.person_outline,
                             validator: Validators.validateName,
                           ),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // Username
                           CustomTextField(
                             controller: _usernameController,
@@ -283,8 +294,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                       )
                                     : null,
                           ),
-                          
-                          if (!_usernameAvailable && _usernameController.text.length >= 3)
+
+                          if (!_usernameAvailable &&
+                              _usernameController.text.length >= 3)
                             Padding(
                               padding: const EdgeInsets.only(top: 4, left: 12),
                               child: Text(
@@ -295,9 +307,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                 ),
                               ),
                             ),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // Email
                           CustomTextField(
                             controller: _emailController,
@@ -306,9 +318,9 @@ class _SignupScreenState extends State<SignupScreen> {
                             keyboardType: TextInputType.emailAddress,
                             validator: Validators.validateEmail,
                           ),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // Password
                           CustomTextField(
                             controller: _passwordController,
@@ -317,7 +329,8 @@ class _SignupScreenState extends State<SignupScreen> {
                             obscureText: _obscurePassword,
                             validator: Validators.validatePassword,
                             onChanged: (value) {
-                              setState(() {}); // Rebuild to update strength indicator
+                              setState(
+                                  () {}); // Rebuild to update strength indicator
                             },
                             suffixIcon: IconButton(
                               icon: Icon(
@@ -333,21 +346,22 @@ class _SignupScreenState extends State<SignupScreen> {
                               },
                             ),
                           ),
-                          
+
                           // Password Strength Indicator
                           PasswordStrengthIndicator(
                             password: _passwordController.text,
                           ),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // Confirm Password
                           CustomTextField(
                             controller: _confirmPasswordController,
                             hintText: 'Confirm Password',
                             prefixIcon: Icons.lock_outline,
                             obscureText: _obscureConfirmPassword,
-                            validator: (value) => Validators.validateConfirmPassword(
+                            validator: (value) =>
+                                Validators.validateConfirmPassword(
                               value,
                               _passwordController.text,
                             ),
@@ -360,25 +374,66 @@ class _SignupScreenState extends State<SignupScreen> {
                               ),
                               onPressed: () {
                                 setState(() {
-                                  _obscureConfirmPassword = !_obscureConfirmPassword;
+                                  _obscureConfirmPassword =
+                                      !_obscureConfirmPassword;
                                 });
                               },
                             ),
                           ),
-                          
+
                           const SizedBox(height: 16),
-                          
-                          // Phone Number (Optional)
-                          CustomTextField(
-                            controller: _phoneController,
-                            hintText: 'Phone Number (Optional)',
-                            prefixIcon: Icons.phone_outlined,
-                            keyboardType: TextInputType.phone,
-                            validator: Validators.validatePhone,
+
+                          // Phone Number (Optional) — with country code picker
+                          const SizedBox(height: 16),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                CountryCodePicker(
+                                  onChanged: (code) {
+                                    setState(() {
+                                      _countryCode = code.dialCode ?? '+1';
+                                    });
+                                  },
+                                  initialSelection: 'US',
+                                  favorite: const ['+1', '+44', '+91'],
+                                  showCountryOnly: false,
+                                  showOnlyCountryWhenClosed: false,
+                                  alignLeft: false,
+                                  textStyle: const TextStyle(
+                                    color: Colors.black87,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                Container(
+                                  width: 1,
+                                  height: 24,
+                                  color: Colors.grey[300],
+                                ),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _phoneController,
+                                    keyboardType: TextInputType.phone,
+                                    validator: Validators.validatePhone,
+                                    decoration: const InputDecoration(
+                                      hintText: 'Phone Number (Optional)',
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 16,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // Date of Birth
                           GestureDetector(
                             onTap: _selectDate,
@@ -388,7 +443,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                 vertical: 16,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.white.withValues(alpha: 0.9),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(
@@ -413,9 +468,9 @@ class _SignupScreenState extends State<SignupScreen> {
                               ),
                             ),
                           ),
-                          
+
                           const SizedBox(height: 24),
-                          
+
                           // Terms & Conditions
                           Row(
                             children: [
@@ -435,7 +490,8 @@ class _SignupScreenState extends State<SignupScreen> {
                                     // TODO: Show terms & conditions
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text('Terms & Conditions dialog'),
+                                        content:
+                                            Text('Terms & Conditions dialog'),
                                       ),
                                     );
                                   },
@@ -450,18 +506,18 @@ class _SignupScreenState extends State<SignupScreen> {
                               ),
                             ],
                           ),
-                          
+
                           const SizedBox(height: 24),
-                          
+
                           // Create Account Button
                           CustomButton(
                             text: 'Create Account',
                             onPressed: _handleSignup,
                             isLoading: _isLoading,
                           ),
-                          
+
                           const SizedBox(height: 24),
-                          
+
                           // Login Link
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -469,7 +525,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               Text(
                                 'Already have an account? ',
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Colors.white.withValues(alpha: 0.9),
                                 ),
                               ),
                               GestureDetector(
@@ -485,7 +541,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               ),
                             ],
                           ),
-                          
+
                           const SizedBox(height: 24),
                         ],
                       ),

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1064369085248",
+    "project_id": "runner-territory-file",
+    "storage_bucket": "runner-territory-file.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1064369085248:android:9e217f1c9394e98960b8a5",
+        "android_client_info": {
+          "package_name": "com.upskill.runner_territory_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOybsuPvW7ixCNJdgTQKdmCpqkFapwB2U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
