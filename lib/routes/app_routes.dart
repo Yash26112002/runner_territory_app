@@ -4,6 +4,9 @@ import '../screens/auth/login_screen.dart';
 import '../screens/auth/signup_screen.dart';
 import '../screens/auth/forgot_password_screen.dart';
 import '../screens/home/dashboard_screen.dart';
+import '../screens/home/active_run_screen.dart';
+import '../screens/home/run_summary_screen.dart';
+import '../screens/home/territory_explorer_screen.dart';
 import '../utils/constants.dart';
 
 class AppRoutes {
@@ -13,27 +16,46 @@ class AppRoutes {
         return MaterialPageRoute(
           builder: (_) => const OnboardingScreen(),
         );
-      
+
       case AppConstants.routeLogin:
         return MaterialPageRoute(
           builder: (_) => const LoginScreen(),
         );
-      
+
       case AppConstants.routeSignup:
         return MaterialPageRoute(
           builder: (_) => const SignupScreen(),
         );
-      
+
       case AppConstants.routeForgotPassword:
         return MaterialPageRoute(
           builder: (_) => const ForgotPasswordScreen(),
         );
-      
+
       case AppConstants.routeDashboard:
         return MaterialPageRoute(
           builder: (_) => const DashboardScreen(),
         );
-      
+
+      case AppConstants.routeActiveRun:
+        return MaterialPageRoute(
+          builder: (_) => const ActiveRunScreen(),
+        );
+
+      case AppConstants.routeRunSummary:
+        {
+          final Map<String, dynamic> runArgs =
+              (settings.arguments as Map<String, dynamic>?) ?? {};
+          return MaterialPageRoute(
+            builder: (_) => RunSummaryScreen(runData: runArgs),
+          );
+        }
+
+      case AppConstants.routeTerritoryExplorer:
+        return MaterialPageRoute(
+          builder: (_) => const TerritoryExplorerScreen(),
+        );
+
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(

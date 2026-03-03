@@ -32,11 +32,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   MapType _currentMapType = MapType.normal;
   final DatabaseService _db = DatabaseService();
 
-  // Mock data
-  final double _territoryOwned = 12.5;
-  final int _currentRank = 42;
-  final int _runningStreak = 7;
-
   late AnimationController _pulseController;
 
   @override
@@ -329,11 +324,20 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
 
                 // Stats Widget
-                StatsWidget(
-                  territoryOwned: _territoryOwned,
-                  currentRank: _currentRank,
-                  runningStreak: _runningStreak,
-                ),
+                StreamBuilder<UserProfile?>(
+                    stream: _db.streamUser(
+                        Provider.of<AuthNotifier>(context, listen: false)
+                                .userToken ??
+                            ''),
+                    builder: (context, snapshot) {
+                      final user = snapshot.data;
+                      return StatsWidget(
+                        territoryOwned:
+                            user?.territoriesOwned.toDouble() ?? 0.0,
+                        currentRank: 1, // Logic to find rank can be added
+                        runningStreak: user?.runningStreak ?? 0,
+                      );
+                    }),
               ],
             ),
           ),

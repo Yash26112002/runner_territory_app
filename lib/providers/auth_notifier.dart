@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/constants.dart';
 import '../services/auth_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../services/database_service.dart';
+import '../models/app_models.dart';
 
 enum AuthStatus { idle, loading, success, error }
 
@@ -50,9 +52,22 @@ class AuthNotifier extends ChangeNotifier {
     try {
       await _authService.signUpWithEmailPassword(email, password);
 
+      final uid = _authService.currentUser?.uid;
+      if (uid != null) {
+        final userProfile = UserProfile(
+          uid: uid,
+          displayName: name,
+          photoUrl: '',
+          totalDistance: 0.0,
+          territoriesOwned: 0,
+          runningStreak: 0,
+        );
+        await DatabaseService().createUserProfile(userProfile);
+      }
+
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(AppConstants.keyUserToken,
-          _authService.currentUser?.uid ?? 'logged_in');
+      await prefs.setString(
+          AppConstants.keyUserToken, uid ?? 'logged_in');
 
       _setSuccess();
       return true;

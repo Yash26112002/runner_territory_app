@@ -41,6 +41,9 @@ class AppConstants {
   static const String routeTerritories = '/territories';
   static const String routeLeaderboard = '/leaderboard';
   static const String routeSocial = '/social';
+  static const String routeActiveRun = '/active-run';
+  static const String routeRunSummary = '/run-summary';
+  static const String routeTerritoryExplorer = '/territory-explorer';
   
   // Map Settings
   static const double defaultMapZoom = 15.0;

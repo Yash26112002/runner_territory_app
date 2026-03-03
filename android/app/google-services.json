@@ -12,7 +12,20 @@
           "package_name": "com.upskill.runner_territory_app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1064369085248-tg1dbi873nqem6l074dhkbjq0gfsfduh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.upskill.runner_territory_app",
+            "certificate_hash": "392601ebc549f04ac698e151b95288978555ab2a"
+          }
+        },
+        {
+          "client_id": "1064369085248-4fdf5qd9bmls19alf4cj69mgs754e3dh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAOybsuPvW7ixCNJdgTQKdmCpqkFapwB2U"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1064369085248-4fdf5qd9bmls19alf4cj69mgs754e3dh.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

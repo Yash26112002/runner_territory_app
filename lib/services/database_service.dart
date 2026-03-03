@@ -104,6 +104,14 @@ class DatabaseService {
     });
   }
 
+  Future<List<Territory>> getAllTerritories() async {
+    final snapshot = await _territoriesRef.limit(200).get();
+    return snapshot.docs
+        .map((doc) =>
+            Territory.fromMap(doc.data() as Map<String, dynamic>, doc.id))
+        .toList();
+  }
+
   // --- Feed & Runs ---
 
   Future<void> saveRun(RunHistory run) async {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/shimmer_loading.dart';
 import '../../theme/app_theme.dart';
 import '../../services/database_service.dart';
 import '../../models/app_models.dart';
@@ -42,7 +43,12 @@ class SocialScreen extends StatelessWidget {
           stream: _db.streamFeed(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return const SocialShimmer();
+            }
+            if (snapshot.hasError) {
+              return Center(
+                child: Text('Error loading feed: ${snapshot.error}'),
+              );
             }
             if (!snapshot.hasData || snapshot.data!.isEmpty) {
               return const Center(

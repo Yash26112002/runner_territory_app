@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:country_code_picker/country_code_picker.dart';
+import 'package:provider/provider.dart';
 import 'dart:io';
+import '../../providers/auth_notifier.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/constants.dart';
 import '../../utils/validators.dart';
@@ -142,23 +144,37 @@ class _SignupScreenState extends State<SignupScreen> {
         _isLoading = true;
       });
 
-      // Full phone number with country code (e.g. "+1 5551234567")
       final fullPhone = _phoneController.text.isNotEmpty
           ? '$_countryCode ${_phoneController.text}'
           : null;
 
-      // TODO: Pass fullPhone to registration API
-      debugPrint('Phone: $fullPhone');
+      final authNotifier = Provider.of<AuthNotifier>(context, listen: false);
+      final success = await authNotifier.signup(
+        name: _nameController.text.trim(),
+        username: _usernameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        phone: fullPhone,
+      );
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
+      if (!mounted) return;
 
       setState(() {
         _isLoading = false;
       });
 
-      if (mounted) {
+      if (success) {
         Navigator.pushReplacementNamed(context, AppConstants.routeDashboard);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              authNotifier.errorMessage ?? 'Signup failed. Please try again.',
+            ),
+            backgroundColor: AppTheme.errorRed,
+          ),
+        );
+        authNotifier.resetStatus();
       }
     }
   }
@@ -297,8 +313,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
                           if (!_usernameAvailable &&
                               _usernameController.text.length >= 3)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4, left: 12),
+                            const Padding(
+                              padding: EdgeInsets.only(top: 4, left: 12),
                               child: Text(
                                 'Username is already taken',
                                 style: TextStyle(

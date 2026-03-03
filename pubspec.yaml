@@ -49,6 +49,20 @@ dependencies:
   cloud_firestore: ^6.1.2
   rxdart: ^0.28.0
   audioplayers: ^6.5.1
+  shimmer: ^3.0.0
+  
+  # Charts & Animations
+  fl_chart: ^0.69.0
+  confetti: ^0.8.0
+  
+  # Sharing
+  share_plus: ^10.1.4
+  
+  # Screen Management
+  wakelock_plus: ^1.2.8
+  
+  # Geo Calculations
+  latlong2: ^0.9.1
 
 dev_dependencies:
   flutter_test:
@@ -61,6 +75,7 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/sounds/
   
   fonts:
     - family: Inter

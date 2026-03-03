@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/shimmer_loading.dart';
 import '../../theme/app_theme.dart';
 import '../../services/database_service.dart';
 import '../../models/app_models.dart';
@@ -40,7 +41,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           stream: _db.streamLeaderboard(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return const LeaderboardShimmer();
+            }
+            if (snapshot.hasError) {
+              return Center(
+                child: Text('Error loading leaderboard: ${snapshot.error}'),
+              );
             }
             if (!snapshot.hasData || snapshot.data!.isEmpty) {
               return const Center(child: Text('No runners yet. Go for a run!'));

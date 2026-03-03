@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_notifier.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/constants.dart';
 import '../../utils/validators.dart';
@@ -35,16 +37,26 @@ class _LoginScreenState extends State<LoginScreen> {
         _errorMessage = null;
       });
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
+      final authNotifier = Provider.of<AuthNotifier>(context, listen: false);
+      final success = await authNotifier.login(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+
+      if (!mounted) return;
 
       setState(() {
         _isLoading = false;
       });
 
-      // Navigate to dashboard
-      if (mounted) {
+      if (success) {
         Navigator.pushReplacementNamed(context, AppConstants.routeDashboard);
+      } else {
+        setState(() {
+          _errorMessage =
+              authNotifier.errorMessage ?? 'Login failed. Please try again.';
+        });
+        authNotifier.resetStatus();
       }
     }
   }
@@ -223,6 +235,37 @@ class _LoginScreenState extends State<LoginScreen> {
                       isLoading: _isLoading,
                     ),
 
+                    const SizedBox(height: 16),
+
+                    // Sign Up Link — placed right below login so it's always visible
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Don't have an account? ",
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.9),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              AppConstants.routeSignup,
+                            );
+                          },
+                          child: const Text(
+                            'Sign Up',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
                     const SizedBox(height: 24),
 
                     // OR Divider
@@ -271,36 +314,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: _handleAppleLogin,
                     ),
 
-                    const SizedBox(height: 32),
-
-                    // Sign Up Link
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Don't have an account? ",
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.9),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pushNamed(
-                              context,
-                              AppConstants.routeSignup,
-                            );
-                          },
-                          child: const Text(
-                            'Sign Up',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
