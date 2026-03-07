@@ -6,6 +6,7 @@ import '../../theme/app_theme.dart';
 import '../../services/database_service.dart';
 import '../../models/app_models.dart';
 import '../../providers/auth_notifier.dart';
+import '../../utils/constants.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class TerritoriesScreen extends StatefulWidget {
@@ -745,20 +746,15 @@ class _TerritoriesScreenState extends State<TerritoriesScreen>
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  icon: const Icon(Icons.directions_run, color: Colors.white),
-                  label: const Text('Defend Territory',
+                  icon: const Icon(Icons.shield_outlined, color: Colors.white),
+                  label: const Text('Battles & Defense',
                       style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 16)),
                   onPressed: () {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content:
-                              Text('Start a run to defend this territory!'),
-                          behavior: SnackBarBehavior.floating),
-                    );
+                    Navigator.pushNamed(context, AppConstants.routeChallenges);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryOrange,

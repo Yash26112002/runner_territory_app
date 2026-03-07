@@ -9,6 +9,7 @@ class DatabaseService {
   CollectionReference get _territoriesRef => _db.collection('territories');
   CollectionReference get _runsRef => _db.collection('runs');
   CollectionReference get _feedRef => _db.collection('feed');
+  CollectionReference get _challengesRef => _db.collection('challenges');
 
   // --- Users ---
 
@@ -54,6 +55,12 @@ class DatabaseService {
     });
   }
 
+  Future<void> updateUserTotalArea(String uid, double areaDelta) async {
+    await _usersRef.doc(uid).update({
+      'totalAreaSqKm': FieldValue.increment(areaDelta),
+    });
+  }
+
   // --- Territories ---
 
   Future<void> claimTerritory(Territory territory) async {
@@ -68,21 +75,77 @@ class DatabaseService {
     );
     await docRef.set(newTerritory.toMap());
 
-    // Also update user's territory count
+    // Also update user's territory count and total area
     await updateUserTerritoryCount(territory.ownerId, 1);
+    await updateUserTotalArea(territory.ownerId, territory.areaSqKm);
   }
 
-  Future<void> overWriteTerritoryOwner(String territoryId, String oldOwnerId,
-      String newOwnerId, String newOwnerName) async {
+  Future<void> overWriteTerritoryOwner(
+    String territoryId,
+    String oldOwnerId,
+    String newOwnerId,
+    String newOwnerName, {
+    double areaSqKm = 0,
+    String oldOwnerName = '',
+  }) async {
     await _territoriesRef.doc(territoryId).update({
       'ownerId': newOwnerId,
       'ownerName': newOwnerName,
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    // Adjust counts
+    // Adjust counts and area
     await updateUserTerritoryCount(oldOwnerId, -1);
     await updateUserTerritoryCount(newOwnerId, 1);
+    if (areaSqKm > 0) {
+      await updateUserTotalArea(oldOwnerId, -areaSqKm);
+      await updateUserTotalArea(newOwnerId, areaSqKm);
+    }
+
+    // Record the challenge if we know both parties
+    if (oldOwnerName.isNotEmpty) {
+      final challenge = Challenge(
+        id: '',
+        territoryId: territoryId,
+        challengerId: newOwnerId,
+        challengerName: newOwnerName,
+        defenderId: oldOwnerId,
+        defenderName: oldOwnerName,
+        status: 'active',
+        outcome: 'pending',
+        createdAt: DateTime.now(),
+        areaSqKm: areaSqKm,
+        participants: [newOwnerId, oldOwnerId],
+      );
+      await createChallenge(challenge);
+    }
+  }
+
+  // --- Challenges ---
+
+  Future<void> createChallenge(Challenge challenge) async {
+    await _challengesRef.doc().set(challenge.toMap());
+  }
+
+  Stream<List<Challenge>> streamUserChallenges(String uid) {
+    return _challengesRef
+        .where('participants', arrayContains: uid)
+        .snapshots()
+        .map((snapshot) {
+      final challenges = snapshot.docs
+          .map((doc) =>
+              Challenge.fromMap(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+      challenges.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return challenges;
+    });
+  }
+
+  Future<void> resolveChallenge(String challengeId, String outcome) async {
+    await _challengesRef.doc(challengeId).update({
+      'status': 'completed',
+      'outcome': outcome,
+    });
   }
 
   Stream<List<Territory>> streamGlobalTerritories() {
@@ -116,6 +179,20 @@ class DatabaseService {
 
   Future<void> saveRun(RunHistory run) async {
     await _runsRef.doc().set(run.toMap());
+    await _usersRef.doc(run.userId).update({
+      'totalRuns': FieldValue.increment(1),
+    });
+  }
+
+  Future<List<RunHistory>> getUserRuns(String uid) async {
+    final snapshot = await _runsRef
+        .where('userId', isEqualTo: uid)
+        .limit(100)
+        .get();
+    return snapshot.docs
+        .map((doc) =>
+            RunHistory.fromMap(doc.data() as Map<String, dynamic>, doc.id))
+        .toList();
   }
 
   Future<void> createFeedPost(FeedPost post) async {

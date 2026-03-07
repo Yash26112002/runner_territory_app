@@ -8,6 +8,11 @@ class UserProfile {
   final double totalDistance;
   final int territoriesOwned;
   final int runningStreak;
+  final String city;
+  final String state;
+  final String country;
+  final double totalAreaSqKm;
+  final int totalRuns;
 
   UserProfile({
     required this.uid,
@@ -16,6 +21,11 @@ class UserProfile {
     this.totalDistance = 0.0,
     this.territoriesOwned = 0,
     this.runningStreak = 0,
+    this.city = '',
+    this.state = '',
+    this.country = '',
+    this.totalAreaSqKm = 0.0,
+    this.totalRuns = 0,
   });
 
   factory UserProfile.fromMap(Map<String, dynamic> data, String documentId) {
@@ -26,6 +36,11 @@ class UserProfile {
       totalDistance: (data['totalDistance'] ?? 0).toDouble(),
       territoriesOwned: data['territoriesOwned'] ?? 0,
       runningStreak: data['runningStreak'] ?? 0,
+      city: data['city'] ?? '',
+      state: data['state'] ?? '',
+      country: data['country'] ?? '',
+      totalAreaSqKm: (data['totalAreaSqKm'] ?? 0).toDouble(),
+      totalRuns: data['totalRuns'] ?? 0,
     );
   }
 
@@ -36,6 +51,11 @@ class UserProfile {
       'totalDistance': totalDistance,
       'territoriesOwned': territoriesOwned,
       'runningStreak': runningStreak,
+      'city': city,
+      'state': state,
+      'country': country,
+      'totalAreaSqKm': totalAreaSqKm,
+      'totalRuns': totalRuns,
     };
   }
 }
@@ -120,6 +140,65 @@ class RunHistory {
       'distanceKm': distanceKm,
       'timeSeconds': timeSeconds,
       'date': Timestamp.fromDate(date),
+    };
+  }
+}
+
+class Challenge {
+  final String id;
+  final String territoryId;
+  final String challengerId;
+  final String challengerName;
+  final String defenderId;
+  final String defenderName;
+  final String status; // 'active' | 'completed'
+  final String outcome; // 'pending' | 'challenger_won' | 'defender_won'
+  final DateTime createdAt;
+  final double areaSqKm;
+  final List<String> participants; // [challengerId, defenderId] for arrayContains queries
+
+  Challenge({
+    required this.id,
+    required this.territoryId,
+    required this.challengerId,
+    required this.challengerName,
+    required this.defenderId,
+    required this.defenderName,
+    this.status = 'active',
+    this.outcome = 'pending',
+    required this.createdAt,
+    this.areaSqKm = 0.0,
+    required this.participants,
+  });
+
+  factory Challenge.fromMap(Map<String, dynamic> data, String documentId) {
+    return Challenge(
+      id: documentId,
+      territoryId: data['territoryId'] ?? '',
+      challengerId: data['challengerId'] ?? '',
+      challengerName: data['challengerName'] ?? 'Challenger',
+      defenderId: data['defenderId'] ?? '',
+      defenderName: data['defenderName'] ?? 'Defender',
+      status: data['status'] ?? 'active',
+      outcome: data['outcome'] ?? 'pending',
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      areaSqKm: (data['areaSqKm'] ?? 0).toDouble(),
+      participants: List<String>.from(data['participants'] ?? []),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'territoryId': territoryId,
+      'challengerId': challengerId,
+      'challengerName': challengerName,
+      'defenderId': defenderId,
+      'defenderName': defenderName,
+      'status': status,
+      'outcome': outcome,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'areaSqKm': areaSqKm,
+      'participants': participants,
     };
   }
 }
