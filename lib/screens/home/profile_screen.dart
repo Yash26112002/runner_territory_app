@@ -5,6 +5,7 @@ import '../../providers/auth_notifier.dart';
 import '../../utils/constants.dart';
 import '../../services/database_service.dart';
 import '../../models/app_models.dart';
+import 'achievements_screen.dart';
 
 // ─── Achievement model (private to this file) ─────────────────────────────────
 
@@ -447,10 +448,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
       List<_Achievement> badges, int unlockedCount) {
     return _section(
       title: 'Achievements',
-      trailing: Text(
-        '$unlockedCount/${badges.length}',
-        style:
-            const TextStyle(color: AppTheme.primaryOrange, fontWeight: FontWeight.bold),
+      trailing: GestureDetector(
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => const AchievementsScreen()),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '$unlockedCount/${badges.length}',
+              style: const TextStyle(
+                  color: AppTheme.primaryOrange,
+                  fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.chevron_right,
+                color: AppTheme.primaryOrange, size: 18),
+          ],
+        ),
       ),
       child: SizedBox(
         height: 108,

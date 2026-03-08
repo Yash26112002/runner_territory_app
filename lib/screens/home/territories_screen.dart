@@ -291,7 +291,7 @@ class _TerritoriesScreenState extends State<TerritoriesScreen>
     ];
 
     return SizedBox(
-      height: 96,
+      height: 110,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -480,7 +480,8 @@ class _TerritoriesScreenState extends State<TerritoriesScreen>
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(Icons.crop_square, size: 12, color: Colors.white38),
+                      const Icon(Icons.crop_square,
+                          size: 12, color: Colors.white38),
                       const SizedBox(width: 4),
                       Text('${t.areaSqKm.toStringAsFixed(3)} km²',
                           style: const TextStyle(
@@ -680,7 +681,11 @@ class _TerritoriesScreenState extends State<TerritoriesScreen>
                   _detailStat('#1', 'Your Rank', AppTheme.primaryOrange),
                   _detailStat('0', 'Challengers', AppTheme.errorRed),
                   _detailStat(
-                      _healthScore(t) >= 0.7 ? 'Strong' : _healthScore(t) >= 0.4 ? 'OK' : 'Weak',
+                      _healthScore(t) >= 0.7
+                          ? 'Strong'
+                          : _healthScore(t) >= 0.4
+                              ? 'OK'
+                              : 'Weak',
                       'Defense',
                       color),
                   _detailStat(t.ownerName, 'Owner', AppTheme.accentPurple),
@@ -818,8 +823,7 @@ class _TerritoriesScreenState extends State<TerritoriesScreen>
         children: [
           const Row(
             children: [
-              Icon(Icons.show_chart,
-                  color: AppTheme.primaryOrange, size: 20),
+              Icon(Icons.show_chart, color: AppTheme.primaryOrange, size: 20),
               SizedBox(width: 8),
               Text('Territory Growth',
                   style: TextStyle(

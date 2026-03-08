@@ -390,6 +390,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               ),
             ),
             child: FloatingActionButton.extended(
+              heroTag: 'startRun',
               onPressed: () {
                 Navigator.push(
                   context,
