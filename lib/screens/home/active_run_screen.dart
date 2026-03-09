@@ -11,6 +11,7 @@ import '../../services/database_service.dart';
 import '../../services/territory_logic_service.dart';
 import '../../models/app_models.dart';
 import '../../providers/auth_notifier.dart';
+import '../../providers/settings_notifier.dart';
 import '../../services/sound_service.dart';
 import '../../utils/constants.dart';
 
@@ -63,6 +64,10 @@ class _ActiveRunScreenState extends State<ActiveRunScreen>
   void initState() {
     super.initState();
     WakelockPlus.enable();
+    
+    // Read user settings
+    final settings = Provider.of<SettingsNotifier>(context, listen: false).settings;
+    _audioEnabled = settings.audioCuesEnabled;
 
     _pulseController = AnimationController(
       vsync: this,
@@ -76,13 +81,15 @@ class _ActiveRunScreenState extends State<ActiveRunScreen>
   }
 
   void _startRun() async {
+    final settings = Provider.of<SettingsNotifier>(context, listen: false).settings;
+
     _currentPosition = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
+      desiredAccuracy: settings.highAccuracyGps ? LocationAccuracy.high : LocationAccuracy.medium,
     );
     if (mounted) setState(() {});
 
-    _soundService.playStartWhistle();
-    _trackingService.startRun();
+    if (_audioEnabled) _soundService.playStartWhistle();
+    _trackingService.startRun(highAccuracy: settings.highAccuracyGps);
 
     _routeSub = _trackingService.routeStream.listen((route) {
       if (mounted) {

@@ -27,14 +27,14 @@ class RunTrackingService {
 
   bool get isRunning => _isRunning;
 
-  void startRun() {
+  void startRun({bool highAccuracy = true}) {
     _isRunning = true;
     _routePoints.clear();
     _totalDistanceMeters = 0.0;
 
-    const LocationSettings locationSettings = LocationSettings(
-      accuracy: LocationAccuracy.bestForNavigation,
-      distanceFilter: 3, // Update every 3 meters
+    final LocationSettings locationSettings = LocationSettings(
+      accuracy: highAccuracy ? LocationAccuracy.bestForNavigation : LocationAccuracy.high,
+      distanceFilter: highAccuracy ? 3 : 5, // Update every 3m for high, 5m for standard
     );
 
     // Listen for Service Status (GPS toggled on/off)

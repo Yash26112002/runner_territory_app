@@ -8,6 +8,7 @@ import '../screens/home/active_run_screen.dart';
 import '../screens/home/run_summary_screen.dart';
 import '../screens/home/territory_explorer_screen.dart';
 import '../screens/home/challenges_screen.dart';
+import '../screens/settings/settings_screen.dart';
 import '../utils/constants.dart';
 
 class AppRoutes {
@@ -60,6 +61,11 @@ class AppRoutes {
       case AppConstants.routeChallenges:
         return MaterialPageRoute(
           builder: (_) => const ChallengesScreen(),
+        );
+
+      case AppConstants.routeSettings:
+        return MaterialPageRoute(
+          builder: (_) => const SettingsScreen(),
         );
 
       default:

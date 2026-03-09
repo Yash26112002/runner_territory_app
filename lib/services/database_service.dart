@@ -61,6 +61,18 @@ class DatabaseService {
     });
   }
 
+  Future<void> updateUserSettings(String uid, UserSettings settings) async {
+    await _usersRef.doc(uid).update({
+      'settings': settings.toMap(),
+    });
+  }
+
+  Future<void> updateUserProfileName(String uid, String newName) async {
+    await _usersRef.doc(uid).update({
+      'displayName': newName,
+    });
+  }
+
   // --- Territories ---
 
   Future<void> claimTerritory(Territory territory) async {

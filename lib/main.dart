@@ -6,6 +6,7 @@ import 'theme/app_theme.dart';
 import 'utils/constants.dart';
 import 'routes/app_routes.dart';
 import 'providers/auth_notifier.dart';
+import 'providers/settings_notifier.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,6 +46,7 @@ class RunnerTerritoryApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthNotifier()),
+        ChangeNotifierProvider(create: (_) => SettingsNotifier()),
       ],
       child: MaterialApp(
         title: AppConstants.appName,
