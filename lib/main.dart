@@ -7,6 +7,8 @@ import 'utils/constants.dart';
 import 'routes/app_routes.dart';
 import 'providers/auth_notifier.dart';
 import 'providers/settings_notifier.dart';
+import 'services/network_log_store.dart';
+import 'widgets/network_log_overlay.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,12 +49,19 @@ class RunnerTerritoryApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthNotifier()),
         ChangeNotifierProvider(create: (_) => SettingsNotifier()),
+        ChangeNotifierProvider(create: (_) => NetworkLogStore()),
       ],
       child: MaterialApp(
         title: AppConstants.appName,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         onGenerateRoute: AppRoutes.generateRoute,
+
+        builder: (context, child) {
+          return NetworkLogOverlay(
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
         home: FutureBuilder<String>(
           future: _getInitialRoute(),
           builder: (context, snapshot) {
@@ -88,6 +97,7 @@ class RunnerTerritoryApp extends StatelessWidget {
           },
         ),
       ),
+
     );
   }
 }

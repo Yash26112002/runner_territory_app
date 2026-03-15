@@ -8,7 +8,9 @@ import '../../utils/constants.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import '../../widgets/stats_widget.dart';
 import '../../services/database_service.dart';
+import '../../services/network_log_store.dart';
 import '../../models/app_models.dart';
+import '../../models/network_log_entry.dart';
 import '../../providers/auth_notifier.dart';
 import 'territories_screen.dart';
 import 'leaderboard_screen.dart';
@@ -52,6 +54,15 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Future<void> _requestLocationPermission() async {
+    // Check if location services are enabled first
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      setState(() {
+        _isLoadingLocation = false;
+      });
+      return;
+    }
+
     final status = await Permission.location.request();
 
     if (status.isGranted) {
@@ -65,10 +76,33 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Future<void> _getCurrentLocation() async {
+    final logStore = NetworkLogStore();
+    final entry = NetworkLogEntry(
+      id: 'loc_${DateTime.now().millisecondsSinceEpoch}',
+      method: 'GET',
+      path: 'geolocator/currentPosition',
+      operation: 'getCurrentLocation',
+      requestData: {'accuracy': 'high', 'source': 'DashboardScreen'},
+      timestamp: DateTime.now(),
+    );
+    logStore.addLog(entry);
+    final stopwatch = Stopwatch()..start();
+
     try {
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
+      stopwatch.stop();
+      entry.complete(
+        durationMs: stopwatch.elapsedMilliseconds,
+        responseData: {
+          'latitude': position.latitude,
+          'longitude': position.longitude,
+          'accuracy': position.accuracy,
+          'altitude': position.altitude,
+        },
+      );
+      logStore.updateLog(entry.id);
 
       setState(() {
         _currentPosition = position;
@@ -81,6 +115,10 @@ class _DashboardScreenState extends State<DashboardScreen>
         ),
       );
     } catch (e) {
+      stopwatch.stop();
+      entry.fail(durationMs: stopwatch.elapsedMilliseconds, error: e.toString());
+      logStore.updateLog(entry.id);
+      debugPrint('Error getting location: $e');
       setState(() {
         _isLoadingLocation = false;
       });

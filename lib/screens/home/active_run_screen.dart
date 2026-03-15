@@ -9,7 +9,9 @@ import '../../theme/app_theme.dart';
 import '../../services/run_tracking_service.dart';
 import '../../services/database_service.dart';
 import '../../services/territory_logic_service.dart';
+import '../../services/network_log_store.dart';
 import '../../models/app_models.dart';
+import '../../models/network_log_entry.dart';
 import '../../providers/auth_notifier.dart';
 import '../../providers/settings_notifier.dart';
 import '../../services/sound_service.dart';
@@ -83,9 +85,39 @@ class _ActiveRunScreenState extends State<ActiveRunScreen>
   void _startRun() async {
     final settings = Provider.of<SettingsNotifier>(context, listen: false).settings;
 
+    final logStore = NetworkLogStore();
+    final entry = NetworkLogEntry(
+      id: 'loc_${DateTime.now().millisecondsSinceEpoch}',
+      method: 'GET',
+      path: 'geolocator/currentPosition',
+      operation: 'getCurrentLocation',
+      requestData: {
+        'accuracy': settings.highAccuracyGps ? 'high' : 'medium',
+        'source': 'ActiveRunScreen',
+      },
+      timestamp: DateTime.now(),
+    );
+    logStore.addLog(entry);
+    final stopwatch = Stopwatch()..start();
+
     _currentPosition = await Geolocator.getCurrentPosition(
       desiredAccuracy: settings.highAccuracyGps ? LocationAccuracy.high : LocationAccuracy.medium,
     );
+    stopwatch.stop();
+    if (_currentPosition != null) {
+      entry.complete(
+        durationMs: stopwatch.elapsedMilliseconds,
+        responseData: {
+          'latitude': _currentPosition!.latitude,
+          'longitude': _currentPosition!.longitude,
+          'accuracy': _currentPosition!.accuracy,
+        },
+      );
+    } else {
+      entry.fail(durationMs: stopwatch.elapsedMilliseconds, error: 'Position returned null');
+    }
+    logStore.updateLog(entry.id);
+
     if (mounted) setState(() {});
 
     if (_audioEnabled) _soundService.playStartWhistle();
