@@ -5,7 +5,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import '../../theme/app_theme.dart';
 import '../../services/database_service.dart';
+import '../../services/network_log_store.dart';
 import '../../models/app_models.dart';
+import '../../models/network_log_entry.dart';
 import '../../providers/auth_notifier.dart';
 import '../../utils/constants.dart';
 
@@ -66,10 +68,33 @@ class _TerritoryExplorerScreenState extends State<TerritoryExplorerScreen>
   }
 
   Future<void> _getLocation() async {
+    final logStore = NetworkLogStore();
+    final entry = NetworkLogEntry(
+      id: 'loc_${DateTime.now().millisecondsSinceEpoch}',
+      method: 'GET',
+      path: 'geolocator/currentPosition',
+      operation: 'getCurrentLocation',
+      requestData: {'accuracy': 'medium', 'source': 'TerritoryExplorerScreen'},
+      timestamp: DateTime.now(),
+    );
+    logStore.addLog(entry);
+    final stopwatch = Stopwatch()..start();
+
     try {
       final pos = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.medium,
       );
+      stopwatch.stop();
+      entry.complete(
+        durationMs: stopwatch.elapsedMilliseconds,
+        responseData: {
+          'latitude': pos.latitude,
+          'longitude': pos.longitude,
+          'accuracy': pos.accuracy,
+        },
+      );
+      logStore.updateLog(entry.id);
+
       if (mounted) {
         setState(() {
           _currentPosition = pos;
@@ -84,7 +109,10 @@ class _TerritoryExplorerScreenState extends State<TerritoryExplorerScreen>
           ),
         );
       }
-    } catch (_) {
+    } catch (e) {
+      stopwatch.stop();
+      entry.fail(durationMs: stopwatch.elapsedMilliseconds, error: e.toString());
+      logStore.updateLog(entry.id);
       if (mounted) setState(() => _loadingLocation = false);
     }
   }

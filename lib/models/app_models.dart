@@ -13,6 +13,7 @@ class UserProfile {
   final String country;
   final double totalAreaSqKm;
   final int totalRuns;
+  final UserSettings? settings;
   final List<String> unlockedRewards;
 
   UserProfile({
@@ -27,6 +28,7 @@ class UserProfile {
     this.country = '',
     this.totalAreaSqKm = 0.0,
     this.totalRuns = 0,
+    this.settings,
     this.unlockedRewards = const [],
   });
 
@@ -43,6 +45,9 @@ class UserProfile {
       country: data['country'] ?? '',
       totalAreaSqKm: (data['totalAreaSqKm'] ?? 0).toDouble(),
       totalRuns: data['totalRuns'] ?? 0,
+      settings: data['settings'] != null
+          ? UserSettings.fromMap(data['settings'])
+          : null,
       unlockedRewards: List<String>.from(data['unlockedRewards'] ?? []),
     );
   }
@@ -59,6 +64,48 @@ class UserProfile {
       'country': country,
       'totalAreaSqKm': totalAreaSqKm,
       'totalRuns': totalRuns,
+      'settings': settings?.toMap(),
+    };
+  }
+}
+
+class UserSettings {
+  final String territoryVisibility; // 'public', 'private'
+  final bool highAccuracyGps;
+  final bool audioCuesEnabled;
+
+  UserSettings({
+    this.territoryVisibility = 'public',
+    this.highAccuracyGps = true,
+    this.audioCuesEnabled = true,
+  });
+
+  factory UserSettings.fromMap(Map<String, dynamic> data) {
+    return UserSettings(
+      territoryVisibility: data['territoryVisibility'] ?? 'public',
+      highAccuracyGps: data['highAccuracyGps'] ?? true,
+      audioCuesEnabled: data['audioCuesEnabled'] ?? true,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'territoryVisibility': territoryVisibility,
+      'highAccuracyGps': highAccuracyGps,
+      'audioCuesEnabled': audioCuesEnabled,
+    };
+  }
+
+  UserSettings copyWith({
+    String? territoryVisibility,
+    bool? highAccuracyGps,
+    bool? audioCuesEnabled,
+  }) {
+    return UserSettings(
+      territoryVisibility: territoryVisibility ?? this.territoryVisibility,
+      highAccuracyGps: highAccuracyGps ?? this.highAccuracyGps,
+      audioCuesEnabled: audioCuesEnabled ?? this.audioCuesEnabled,
+    );
       'unlockedRewards': unlockedRewards,
     };
   }

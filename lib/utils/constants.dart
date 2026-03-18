@@ -45,6 +45,7 @@ class AppConstants {
   static const String routeRunSummary = '/run-summary';
   static const String routeTerritoryExplorer = '/territory-explorer';
   static const String routeChallenges = '/challenges';
+  static const String routeSettings = '/settings';
   static const String routeFriendsClubs = '/friends';
   static const String routeAchievements = '/achievements';
   

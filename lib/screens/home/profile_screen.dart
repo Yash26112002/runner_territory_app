@@ -170,9 +170,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined, color: Colors.black87),
-            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Settings coming soon!')),
-            ),
+            onPressed: () => Navigator.pushNamed(context, AppConstants.routeSettings),
           ),
         ],
       ),
@@ -288,7 +286,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 bottom: 2,
                 right: 2,
                 child: GestureDetector(
-                  onTap: () {},
+                  onTap: () => Navigator.pushNamed(context, AppConstants.routeSettings),
                   child: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
