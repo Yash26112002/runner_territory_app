@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:maps_toolkit/maps_toolkit.dart' as mt;
 import 'package:provider/provider.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../theme/app_theme.dart';
@@ -51,6 +52,7 @@ class _ActiveRunScreenState extends State<ActiveRunScreen>
   Position? _currentPosition;
   int _gpsAccuracy = 0; // in meters — updated live from position stream
   final double _maxSpeed = 0.0;
+  double? _distanceToStart; // meters, null when route is empty
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
@@ -199,12 +201,35 @@ class _ActiveRunScreenState extends State<ActiveRunScreen>
   void _updateTerritoryPreview() {
     if (_route.length < 3) {
       _polygons = {};
+      _distanceToStart = null;
       return;
     }
+
+    // Simplify route for preview using Douglas-Peucker
+    final mtPoints =
+        _route.map((p) => mt.LatLng(p.latitude, p.longitude)).toList();
+    final simplified = mt.PolygonUtil.simplify(mtPoints, 8.0);
+    List<LatLng> previewPoints =
+        simplified.map((p) => LatLng(p.latitude, p.longitude)).toList();
+
+    // Check proximity to start and update indicator
+    final distToStart = Geolocator.distanceBetween(
+      previewPoints.last.latitude,
+      previewPoints.last.longitude,
+      previewPoints.first.latitude,
+      previewPoints.first.longitude,
+    );
+    _distanceToStart = distToStart;
+
+    // Close the polygon
+    if (distToStart > 150) {
+      previewPoints = [...previewPoints, previewPoints.first];
+    }
+
     _polygons = {
       Polygon(
         polygonId: const PolygonId('territory_preview'),
-        points: _route,
+        points: previewPoints,
         fillColor: AppTheme.primaryOrange.withValues(alpha: 0.2),
         strokeColor: AppTheme.primaryOrange.withValues(alpha: 0.7),
         strokeWidth: 2,
@@ -502,6 +527,38 @@ class _ActiveRunScreenState extends State<ActiveRunScreen>
               right: 0,
               child: _buildBottomControls(),
             ),
+
+            // ── Proximity to start indicator ─────────────────────────────────
+            if (_distanceToStart != null && _distanceToStart! <= 300)
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 180,
+                left: 24,
+                right: 24,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryOrange.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.flag, color: Colors.white, size: 14),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${((_distanceToStart! / 10).round() * 10).toInt()}m from start — close the loop to claim full territory',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
 
             // ── Lock overlay ─────────────────────────────────────────────────
             if (_isScreenLocked)

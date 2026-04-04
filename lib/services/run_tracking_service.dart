@@ -8,12 +8,17 @@ import 'network_log_store.dart';
 class RunTrackingService {
   StreamSubscription<Position>? _positionStream;
   StreamSubscription<ServiceStatus>? _serviceStatusStream;
+  Timer? _simulationTimer;
   final List<LatLng> _routePoints = [];
   double _totalDistanceMeters = 0.0;
   bool _isRunning = false;
   DateTime? _lastUpdateTime;
   final NetworkLogStore _logStore = NetworkLogStore();
   int _logCounter = 0;
+
+  DateTime? _runStartTime;
+  LatLng? _lastAcceptedPoint;
+  DateTime? _lastAcceptedTime;
 
   final StreamController<List<LatLng>> _routeController =
       StreamController<List<LatLng>>.broadcast();
@@ -36,7 +41,9 @@ class RunTrackingService {
     _isRunning = true;
     _routePoints.clear();
     _totalDistanceMeters = 0.0;
-    _lastUpdateTime = null;
+    _runStartTime = DateTime.now();
+    _lastAcceptedPoint = null;
+    _lastAcceptedTime = null;
 
     final LocationSettings locationSettings = LocationSettings(
       accuracy: highAccuracy ? LocationAccuracy.bestForNavigation : LocationAccuracy.high,
@@ -63,8 +70,32 @@ class RunTrackingService {
       // Emit GPS accuracy so the UI can reflect signal quality
       _accuracyController.add(position.accuracy);
 
+      // Filter 1: skip warm-up noise in the first 20 seconds
+      if (_runStartTime != null &&
+          DateTime.now().difference(_runStartTime!).inSeconds < 20) {
+        return;
+      }
+
+      // Filter 2: reject low-accuracy points
+      if (position.accuracy > 50.0) return;
+
       final newPoint = LatLng(position.latitude, position.longitude);
-      double segmentDistance = 0;
+      final now = DateTime.now();
+
+      // Filter 3: reject points implying speed > 6 m/s (21 km/h)
+      if (_lastAcceptedPoint != null && _lastAcceptedTime != null) {
+        final distanceMeters = Geolocator.distanceBetween(
+          _lastAcceptedPoint!.latitude,
+          _lastAcceptedPoint!.longitude,
+          newPoint.latitude,
+          newPoint.longitude,
+        );
+        final elapsedSeconds =
+            now.difference(_lastAcceptedTime!).inMilliseconds / 1000.0;
+        if (elapsedSeconds > 0 && distanceMeters / elapsedSeconds > 6.0) {
+          return;
+        }
+      }
 
       if (_routePoints.isNotEmpty) {
         final lastPoint = _routePoints.last;
@@ -78,6 +109,8 @@ class RunTrackingService {
       }
 
       _routePoints.add(newPoint);
+      _lastAcceptedPoint = newPoint;
+      _lastAcceptedTime = now;
 
       // Log this position update
       final entry = NetworkLogEntry(
@@ -108,6 +141,44 @@ class RunTrackingService {
       _distanceController.add(_totalDistanceMeters);
     }, onError: (error) {
       debugPrint('Location stream error: $error');
+    });
+  }
+
+  void startSimulatedRun(List<LatLng> points, {Duration interval = const Duration(milliseconds: 600)}) {
+    _isRunning = true;
+    _routePoints.clear();
+    _totalDistanceMeters = 0.0;
+    _runStartTime = DateTime.now().subtract(const Duration(seconds: 30));
+    _lastAcceptedPoint = null;
+    _lastAcceptedTime = null;
+
+    int index = 0;
+    _simulationTimer = Timer.periodic(interval, (timer) {
+      if (index >= points.length) {
+        timer.cancel();
+        _simulationTimer = null;
+        return;
+      }
+
+      final newPoint = points[index];
+      _accuracyController.add(5.0);
+
+      if (_routePoints.isNotEmpty) {
+        final lastPoint = _routePoints.last;
+        final distance = Geolocator.distanceBetween(
+          lastPoint.latitude,
+          lastPoint.longitude,
+          newPoint.latitude,
+          newPoint.longitude,
+        );
+        _totalDistanceMeters += distance;
+      }
+
+      _routePoints.add(newPoint);
+      _routeController.add(List.from(_routePoints));
+      _distanceController.add(_totalDistanceMeters);
+
+      index++;
     });
   }
 

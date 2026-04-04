@@ -1,5 +1,6 @@
-import 'dart:math';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:maps_toolkit/maps_toolkit.dart' as mt;
 import '../models/app_models.dart';
 import 'database_service.dart';
 
@@ -19,37 +20,36 @@ class TerritoryLogicService {
       return null;
     }
 
-    // Step 1: Find Min and Max Lat/Long to form a bounding box
-    double minLat = route.first.latitude;
-    double maxLat = route.first.latitude;
-    double minLng = route.first.longitude;
-    double maxLng = route.first.longitude;
+    // Step 1: Simplify the GPS route using Douglas-Peucker (8m tolerance)
+    final mtPoints = route
+        .map((p) => mt.LatLng(p.latitude, p.longitude))
+        .toList();
+    final simplified = mt.PolygonUtil.simplify(mtPoints, 8.0);
+    List<LatLng> polygonPoints = simplified
+        .map((p) => LatLng(p.latitude, p.longitude))
+        .toList();
 
-    for (var point in route) {
-      if (point.latitude < minLat) minLat = point.latitude;
-      if (point.latitude > maxLat) maxLat = point.latitude;
-      if (point.longitude < minLng) minLng = point.longitude;
-      if (point.longitude > maxLng) maxLng = point.longitude;
+    // Step 2: Close the polygon
+    // If end point is within 150m of start, treat as a closed loop
+    final distanceToStart = Geolocator.distanceBetween(
+      polygonPoints.last.latitude,
+      polygonPoints.last.longitude,
+      polygonPoints.first.latitude,
+      polygonPoints.first.longitude,
+    );
+    if (distanceToStart > 150) {
+      // Add closing line from end back to start
+      polygonPoints = [...polygonPoints, polygonPoints.first];
     }
 
-    // The corners of our new bounding box Territory
-    List<LatLng> polygonPoints = [
-      LatLng(maxLat, minLng), // Top Left
-      LatLng(maxLat, maxLng), // Top Right
-      LatLng(minLat, maxLng), // Bottom Right
-      LatLng(minLat, minLng), // Bottom Left
-    ];
+    // Step 3: Calculate area using spherically correct formula
+    final mtPolygon = polygonPoints
+        .map((p) => mt.LatLng(p.latitude, p.longitude))
+        .toList();
+    double areaSqKm = mt.SphericalUtil.computeArea(mtPolygon).toDouble() / 1e6;
+    areaSqKm = areaSqKm < 0.001 ? 0.001 : areaSqKm;
 
-    // Step 2: Calculate Area of this new bounding box (roughly in square kilometers)
-    // using the Haversine distance between top-left/top-right and top-left/bottom-left.
-    double widthKm = _haversineDistance(maxLat, minLng, maxLat, maxLng);
-    double heightKm = _haversineDistance(maxLat, minLng, minLat, minLng);
-    double areaSqKm = widthKm * heightKm;
-
-    // Optional: Inflate the box slightly to make it look better on the map
-    areaSqKm = (areaSqKm < 0.01) ? 0.01 : areaSqKm;
-
-    // Step 3: Check for overlaps with existing territories
+    // Step 4: Check for overlaps with existing territories
     // (MVP: Query all territories and check bounding box collision)
     // NOTE: In production, we would use GeoQueries to limit the search space.
     final existingTerritories = await _db.streamGlobalTerritories().first;
@@ -65,7 +65,7 @@ class TerritoryLogicService {
       }
     }
 
-    // Step 4: Write to Database
+    // Step 5: Write to Database
     if (overtakenTerritory != null) {
       await _db.overWriteTerritoryOwner(
           overtakenTerritory.id, overtakenTerritory.ownerId, userId, userName);
@@ -93,25 +93,6 @@ class TerritoryLogicService {
       await _db.claimTerritory(newTerritory);
       return newTerritory;
     }
-  }
-
-  // Helper: Haversine distance in km
-  double _haversineDistance(
-      double lat1, double lon1, double lat2, double lon2) {
-    const double r = 6371; // Earth radius in km
-    final double dLat = _toRadians(lat2 - lat1);
-    final double dLon = _toRadians(lon2 - lon1);
-    final double a = sin(dLat / 2) * sin(dLat / 2) +
-        cos(_toRadians(lat1)) *
-            cos(_toRadians(lat2)) *
-            sin(dLon / 2) *
-            sin(dLon / 2);
-    final double c = 2 * atan2(sqrt(a), sqrt(1 - a));
-    return r * c;
-  }
-
-  double _toRadians(double degree) {
-    return degree * pi / 180;
   }
 
   // MVP Overlap check (AABB Collision basically)
