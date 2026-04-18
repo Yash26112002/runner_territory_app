@@ -106,8 +106,6 @@ class UserSettings {
       highAccuracyGps: highAccuracyGps ?? this.highAccuracyGps,
       audioCuesEnabled: audioCuesEnabled ?? this.audioCuesEnabled,
     );
-      'unlockedRewards': unlockedRewards,
-    };
   }
 }
 

@@ -120,7 +120,10 @@ class _ActiveRunScreenState extends State<ActiveRunScreen>
     }
     logStore.updateLog(entry.id);
 
-    if (mounted) setState(() {});
+    if (mounted) {
+      setState(() {});
+      _centerOnCurrentPosition();
+    }
 
     if (_audioEnabled) _soundService.playStartWhistle();
     _trackingService.startRun(highAccuracy: settings.highAccuracyGps);
@@ -235,6 +238,18 @@ class _ActiveRunScreenState extends State<ActiveRunScreen>
         strokeWidth: 2,
       ),
     };
+  }
+
+  void _centerOnCurrentPosition() {
+    if (_mapController == null) return;
+    final pos = _route.isNotEmpty
+        ? _route.last
+        : _currentPosition != null
+            ? LatLng(_currentPosition!.latitude, _currentPosition!.longitude)
+            : null;
+    if (pos != null) {
+      _mapController!.animateCamera(CameraUpdate.newLatLngZoom(pos, 17));
+    }
   }
 
   void _animateCameraToLatest() {
@@ -456,7 +471,15 @@ class _ActiveRunScreenState extends State<ActiveRunScreen>
               mapType: MapType.normal,
               polylines: _polylines,
               polygons: _polygons,
-              onMapCreated: (c) => _mapController = c,
+              onMapCreated: (c) {
+                _mapController = c;
+                if (_currentPosition != null) {
+                  c.animateCamera(CameraUpdate.newLatLngZoom(
+                    LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+                    17,
+                  ));
+                }
+              },
               style: _darkMapStyle,
             ),
 
@@ -509,6 +532,16 @@ class _ActiveRunScreenState extends State<ActiveRunScreen>
                     ),
                   ],
                 ),
+              ),
+            ),
+
+            // ── Locate me button ────────────────────────────────────────────
+            Positioned(
+              right: 16,
+              top: MediaQuery.of(context).padding.top + 210,
+              child: _glassButton(
+                icon: Icons.my_location,
+                onTap: _centerOnCurrentPosition,
               ),
             ),
 

@@ -245,18 +245,6 @@ class DatabaseService {
         await updateUserTotalArea(territory.ownerId, territory.areaSqKm);
       },
     );
-    final docRef = _territoriesRef.doc();
-    final newTerritory = Territory(
-      id: docRef.id,
-      ownerId: territory.ownerId,
-      ownerName: territory.ownerName,
-      areaSqKm: territory.areaSqKm,
-      polygonPoints: territory.polygonPoints,
-      createdAt: territory.createdAt,
-    );
-    await docRef.set(newTerritory.toMap());
-    await updateUserTerritoryCount(territory.ownerId, 1);
-    await updateUserTotalArea(territory.ownerId, territory.areaSqKm);
   }
 
   Future<void> overWriteTerritoryOwner(
@@ -310,33 +298,6 @@ class DatabaseService {
         }
       },
     );
-    await _territoriesRef.doc(territoryId).update({
-      'ownerId': newOwnerId,
-      'ownerName': newOwnerName,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-    await updateUserTerritoryCount(oldOwnerId, -1);
-    await updateUserTerritoryCount(newOwnerId, 1);
-    if (areaSqKm > 0) {
-      await updateUserTotalArea(oldOwnerId, -areaSqKm);
-      await updateUserTotalArea(newOwnerId, areaSqKm);
-    }
-    if (oldOwnerName.isNotEmpty) {
-      final challenge = Challenge(
-        id: '',
-        territoryId: territoryId,
-        challengerId: newOwnerId,
-        challengerName: newOwnerName,
-        defenderId: oldOwnerId,
-        defenderName: oldOwnerName,
-        status: 'active',
-        outcome: 'pending',
-        createdAt: DateTime.now(),
-        areaSqKm: areaSqKm,
-        participants: [newOwnerId, oldOwnerId],
-      );
-      await createChallenge(challenge);
-    }
   }
 
   // --- Challenges ---
@@ -493,6 +454,7 @@ class DatabaseService {
         await _runsRef.doc().set(run.toMap());
         await _usersRef.doc(run.userId).update({
           'totalRuns': FieldValue.increment(1),
+          'totalDistance': FieldValue.increment(run.distanceKm),
         });
       },
     );

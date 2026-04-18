@@ -80,7 +80,6 @@ class RunTrackingService {
       if (position.accuracy > 50.0) return;
 
       final newPoint = LatLng(position.latitude, position.longitude);
-      final now = DateTime.now();
 
       // Filter 3: reject points implying speed > 6 m/s (21 km/h)
       if (_lastAcceptedPoint != null && _lastAcceptedTime != null) {
@@ -97,6 +96,7 @@ class RunTrackingService {
         }
       }
 
+      double segmentDistance = 0.0;
       if (_routePoints.isNotEmpty) {
         final lastPoint = _routePoints.last;
         segmentDistance = Geolocator.distanceBetween(

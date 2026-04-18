@@ -63,6 +63,7 @@ dependencies:
   
   # Geo Calculations
   latlong2: ^0.9.1
+  maps_toolkit: ^3.0.0
 
 dev_dependencies:
   flutter_test:
